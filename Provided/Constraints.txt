@@ -1,0 +1,5 @@
+CA Constraints:
+
+    Work under the assumption there is no current infrastructure available to re-use for this application
+    Development Cost is not a factor under consideration for the purposes of this report at Horizon Holidays
+    Assume there is an Operational budget availability of €500,000 (with a 10% margin) to use over the next 5 years
