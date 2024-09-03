@@ -1,0 +1,83 @@
+
+title Horizon Holidays Sequence Diagram
+
+actor Customer User
+participant Website Interface
+participant Customer Portal (Login)
+participant Customer Portal (cart)
+participant Customer Portal (account)
+database CRM
+actor Staff User
+participant GDS Search API
+participant GDS Booking API
+
+==Load Homepage==
+Customer User->Website Interface:Load Website
+Website Interface->Customer Portal (Login):Request Authentication
+Customer Portal (Login)->Customer Portal (Login):Check if User Logged In
+Customer Portal (Login)->CRM: Identify Customer if logged in
+Website Interface<--CRM: Return User
+Website Interface->GDS Search API:Seek Recommendations
+box over Website Interface:If User is not logged in, \nsupply default recommendations.
+Website Interface<--GDS Search API:Return Recommendations
+Customer User<--Website Interface:Display Recommendations
+
+==Search for Product==
+Customer User->Website Interface:Search for Product
+Website Interface->GDS Search API:Request Search Results
+Website Interface<--GDS Search API:Return Search Results
+Customer User<-Website Interface:Display Results
+
+
+==Login Flow==
+Customer User->Website Interface:Request Login
+Website Interface->Customer Portal (Login):Request Login
+Customer Portal (Login)->Customer Portal (Login):Check Login
+alt Already Logged In
+Website Interface<--Customer Portal (Login):Return 'Logged In'
+else Login Authorized
+Website Interface<--Customer Portal (Login):Return 'Login Success'
+else Login Failed
+Website Interface<--Customer Portal (Login):Return Login Failed
+Customer User<-Website Interface:Prompt User to Login Again
+end
+==New Customer User==
+Customer User->Website Interface:Request Signup
+Website Interface->Customer Portal (Login):Request Signup
+Customer User<-Customer Portal (Login):Request New Account Information
+Customer User->Customer Portal (Login):Return New Account Information
+Customer Portal (Login)->CRM:Check Duplicates
+alt Dupe Found
+Customer Portal (Login)<-CRM:Return Duplicate Found
+Customer User<-Customer Portal (Login):Deny Signup, Advise Login
+else Allow account
+Customer Portal (Login)<-CRM:Return Success
+Customer User<-Customer Portal (Login):Advise Success, Log in Account
+end
+==Cart Functions (Assume Logged In)==
+Customer User->Website Interface:Request Add/Remove Product to Cart
+Website Interface->Customer Portal (cart):Update Cart
+Website Interface<--Customer Portal (cart):Return Updated Cart
+Customer User<-Website Interface:Display Updated Cart
+==Complete Booking (Assume Logged In)==
+Customer User->Website Interface:Request Book itinerary in Cart
+Website Interface->GDS Booking API:Send Cart to GDS API to confirm availability and reserve product
+alt Cart is Bad
+Website Interface<--GDS Booking API:Return Cart is Bad
+Customer User<-Website Interface:Return Cart is Bad. \nAdvise what parts of Cart need replacement.
+else Cart is Good
+Website Interface<-GDS Booking API:Return Cart is Good, Continue Booking Flow
+Website Interface->Customer Portal (account):Request Account Information for pre-fill
+Customer Portal (account)->CRM:Request Customer Information
+Website Interface<-CRM:Return Customer Information for pre-fill
+Customer User<-Website Interface:Request Required information
+Customer User->Website Interface:Return Required information
+box right of Customer User:Required information in this case could be passport number, \netc, depending on requested product
+Website Interface->CRM:Update Customer Information
+Website Interface->GDS Booking API:Send complete Booking information
+Website Interface<-GDS Booking API:Validate booking information, request Payment Information
+Customer User<-Website Interface:Request Payment Authorization
+Customer User->GDS Booking API:Provide Payment Authorization
+Website Interface<-GDS Booking API:Confirm Booking
+Customer User<-Website Interface:Confirm Booking
+end
